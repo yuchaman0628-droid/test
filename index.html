@@ -250,7 +250,6 @@
 
 <div class="banned-overlay" id="banned-overlay">
   <div class="glitch-box">
-    <!-- 💀アイコンを5回連打すると救済（緊急パスコード解除）モーダルが作動 -->
     <div class="banned-icon" id="banned-glitch-icon" onclick="handleGlitchSecretClick()">☠️</div>
     <div class="banned-title">SYSTEM CORRUPTED</div>
     <div class="banned-text">
@@ -513,9 +512,6 @@
       window.addEventListener('contextmenu', blockAllEvents, true);
       window.addEventListener('touchstart', blockAllEvents, true);
       
-      if (peer) {
-        try { peer.destroy(); } catch(e){}
-      }
       startGlitchAnimation();
     } else {
       overlay.classList.remove('active');
@@ -683,29 +679,41 @@
       saveDataToStorage();
 
       // 相手にBAN解除通知を送信して画面を自動復旧させる
-      try {
-        const conn = peer.connect(pId);
-        conn.on('open', () => {
+      const sendUnbanSignal = (conn) => {
+        try {
           conn.send({ type: 'ban-status', banned: false });
-        });
-      } catch(e){}
+        } catch(e){}
+      };
+
+      if (connections[pId] && connections[pId].open) {
+        sendUnbanSignal(connections[pId]);
+      } else {
+        try {
+          const conn = peer.connect(pId);
+          conn.on('open', () => sendUnbanSignal(conn));
+        } catch(e){}
+      }
 
       alert(`✅ ユーザー ${pId} のBANを解除し、アカウントを復活させました！`);
     } else {
       // --- BAN実行処理 ---
       if (confirm(`ID: ${pId} をBANしますか？\n（相手をバグ崩壊画面にして完全にロックします）`)) {
         bannedUsers.push(pId);
-        if (connections[pId]) {
+        const sendBanSignal = (conn) => {
           try {
-            connections[pId].send({ type: 'ban-status', banned: true });
+            conn.send({ type: 'ban-status', banned: true });
           } catch(e){}
-          setTimeout(() => {
-            if (connections[pId]) {
-              connections[pId].close();
-              delete connections[pId];
-            }
-          }, 300);
+        };
+
+        if (connections[pId] && connections[pId].open) {
+          sendBanSignal(connections[pId]);
+        } else {
+          try {
+            const conn = peer.connect(pId);
+            conn.on('open', () => sendBanSignal(conn));
+          } catch(e){}
         }
+
         saveDataToStorage();
         alert(`🚫 ${pId} をBANしました`);
       }
@@ -850,8 +858,6 @@
     loadStoredData();
     checkNotificationPermission();
 
-    if (isBannedSelf) return;
-
     if (!myId) {
       myId = 'user-' + Math.floor(10000 + Math.random() * 90000);
       saveDataToStorage();
@@ -884,28 +890,20 @@
   }
 
   function autoReconnectFriends() {
-    if (isBannedSelf) return;
     Object.keys(friends).forEach(fId => {
       if (!connections[fId] && !bannedUsers.includes(fId)) setupConnection(peer.connect(fId));
     });
   }
 
   function setupConnection(conn) {
-    if (isBannedSelf) return;
-    if (bannedUsers.includes(conn.peer)) {
-      conn.on('open', () => {
-        try { conn.send({ type: 'ban-status', banned: true }); } catch(e){}
-        setTimeout(() => conn.close(), 500);
-      });
-      return;
-    }
-
     connections[conn.peer] = conn;
 
     conn.on('open', () => {
-      conn.send({ type: 'profile-sync', profile: myProfile });
-      syncMessageHistory(conn.peer);
-      renderLists();
+      if (!isBannedSelf) {
+        conn.send({ type: 'profile-sync', profile: myProfile });
+        syncMessageHistory(conn.peer);
+        renderLists();
+      }
     });
 
     conn.on('data', (data) => handleIncomingData(conn.peer, data));
@@ -948,7 +946,6 @@
 
       if (isBannedSelf) {
         showBannedOverlay(true);
-        if (connections[fromPeerId]) connections[fromPeerId].close();
       } else {
         // BAN解除されたら自動的に復旧してページ再読み込み
         showBannedOverlay(false);
@@ -959,7 +956,6 @@
     }
 
     if (bannedUsers.includes(fromPeerId) || isBannedSelf) {
-      if (connections[fromPeerId]) connections[fromPeerId].close();
       return;
     }
 
