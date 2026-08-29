@@ -250,6 +250,7 @@
 
 <div class="banned-overlay" id="banned-overlay">
   <div class="glitch-box">
+    <!-- 💀アイコンを5回連打すると救済（緊急パスコード解除）モーダルが作動 -->
     <div class="banned-icon" id="banned-glitch-icon" onclick="handleGlitchSecretClick()">☠️</div>
     <div class="banned-title">SYSTEM CORRUPTED</div>
     <div class="banned-text">
@@ -378,7 +379,7 @@
   <div class="modal-overlay" id="admin-pass-modal">
     <div class="modal">
       <h3 style="color: #d97706;">🔒 秘密の管理者認証</h3>
-      <p style="font-size: 12px; color: #666;">管理者用パスコードを入力してください。（初期パス: admin777）</p>
+      <p style="font-size: 12px; color: #666;">管理者用パスコードを入力してください。</p>
       <input type="password" id="admin-pass-input" placeholder="パスコード...">
       <div class="modal-btns">
         <button class="btn btn-secondary" onclick="closeModal('admin-pass-modal')">キャンセル</button>
@@ -463,7 +464,7 @@
 
 <script>
   const STORAGE_KEY = 'LINE_APP_PERSISTENT_DATA_V3';
-  const ADMIN_PASSCODE = 'admin777'; // 管理者パスコード
+  const ADMIN_PASSCODE = '2013';
 
   let peer = null;
   let myId = '';
@@ -500,11 +501,14 @@
   let localStream = null;
   let incomingCall = null;
 
-  /* BAN画面の制御と隠し救済コマンド */
+  /* BAN画面の制御とイベントブロックの解除処理 */
   function showBannedOverlay(show) {
     const overlay = document.getElementById('banned-overlay');
+    if (!overlay) return;
+
     if (show) {
       overlay.classList.add('active');
+      overlay.style.display = 'flex';
       window.addEventListener('keydown', blockAllEvents, true);
       window.addEventListener('keyup', blockAllEvents, true);
       window.addEventListener('keypress', blockAllEvents, true);
@@ -515,6 +519,7 @@
       startGlitchAnimation();
     } else {
       overlay.classList.remove('active');
+      overlay.style.display = 'none';
       window.removeEventListener('keydown', blockAllEvents, true);
       window.removeEventListener('keyup', blockAllEvents, true);
       window.removeEventListener('keypress', blockAllEvents, true);
@@ -526,7 +531,6 @@
 
   function blockAllEvents(e) {
     if (isBannedSelf) {
-      // BAN画面のドクロマーク(banned-glitch-icon)のクリックだけは緊急救済のため許可
       if (e.target && e.target.id === 'banned-glitch-icon') {
         return true;
       }
@@ -548,6 +552,11 @@
         isBannedSelf = false;
         saveDataToStorage();
         showBannedOverlay(false);
+        
+        Object.values(connections).forEach(conn => {
+          try { conn.send({ type: 'emergency-unban-notify' }); } catch(e){}
+        });
+
         alert("🔓 アカウントのBAN解除・完全復活に成功しました！ページを再読み込みします。");
         location.reload();
       } else if (pass !== null) {
@@ -678,7 +687,12 @@
       bannedUsers = bannedUsers.filter(id => id !== pId);
       saveDataToStorage();
 
-      // 相手にBAN解除通知を送信して画面を自動復旧させる
+      if (pId === myId) {
+        isBannedSelf = false;
+        saveDataToStorage();
+        showBannedOverlay(false);
+      }
+
       const sendUnbanSignal = (conn) => {
         try {
           conn.send({ type: 'ban-status', banned: false });
@@ -699,6 +713,14 @@
       // --- BAN実行処理 ---
       if (confirm(`ID: ${pId} をBANしますか？\n（相手をバグ崩壊画面にして完全にロックします）`)) {
         bannedUsers.push(pId);
+        saveDataToStorage();
+
+        if (pId === myId) {
+          isBannedSelf = true;
+          saveDataToStorage();
+          showBannedOverlay(true);
+        }
+
         const sendBanSignal = (conn) => {
           try {
             conn.send({ type: 'ban-status', banned: true });
@@ -714,7 +736,6 @@
           } catch(e){}
         }
 
-        saveDataToStorage();
         alert(`🚫 ${pId} をBANしました`);
       }
     }
@@ -891,7 +912,7 @@
 
   function autoReconnectFriends() {
     Object.keys(friends).forEach(fId => {
-      if (!connections[fId] && !bannedUsers.includes(fId)) setupConnection(peer.connect(fId));
+      if (!connections[fId]) setupConnection(peer.connect(fId));
     });
   }
 
@@ -899,6 +920,12 @@
     connections[conn.peer] = conn;
 
     conn.on('open', () => {
+      if (myProfile.isAdmin) {
+        conn.send({ type: 'ban-status', banned: bannedUsers.includes(conn.peer) });
+      } else {
+        conn.send({ type: 'check-ban-status' });
+      }
+
       if (!isBannedSelf) {
         conn.send({ type: 'profile-sync', profile: myProfile });
         syncMessageHistory(conn.peer);
@@ -938,7 +965,24 @@
   }
 
   function handleIncomingData(fromPeerId, data) {
-    /* リアルタイムBAN/BAN解除受信処理 */
+    if (data.type === 'check-ban-status') {
+      if (myProfile.isAdmin) {
+        connSendStatus(fromPeerId, bannedUsers.includes(fromPeerId));
+      }
+      return;
+    }
+
+    if (data.type === 'emergency-unban-notify') {
+      if (myProfile.isAdmin) {
+        bannedUsers = bannedUsers.filter(id => id !== fromPeerId);
+        saveDataToStorage();
+        if (document.getElementById('admin-modal').classList.contains('active')) {
+          openAdminModal();
+        }
+      }
+      return;
+    }
+
     if (data.type === 'ban-status' || data.type === 'banned') {
       const bannedState = (data.banned !== undefined) ? data.banned : true;
       isBannedSelf = bannedState;
@@ -947,7 +991,6 @@
       if (isBannedSelf) {
         showBannedOverlay(true);
       } else {
-        // BAN解除されたら自動的に復旧してページ再読み込み
         showBannedOverlay(false);
         alert("🎉 管理者によってBANが解除されました！アプリを正常復帰します。");
         location.reload();
@@ -1034,6 +1077,12 @@
       saveDataToStorage();
       renderLists();
       if (activeTargetId === data.groupId) renderMessages();
+    }
+  }
+
+  function connSendStatus(peerId, isBanned) {
+    if (connections[peerId] && connections[peerId].open) {
+      connections[peerId].send({ type: 'ban-status', banned: isBanned });
     }
   }
 
