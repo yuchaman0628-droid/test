@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LINE風チャットアプリ Complete (Admin & Data Purge Edition)</title>
+  <title>茶マンズLINE</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     :root {
@@ -47,6 +47,40 @@
 
     .screen { display: none; flex-direction: column; height: 100%; width: 100%; }
     .screen.active { display: flex; }
+
+    /* タイトル画面スタイル */
+    #title-screen {
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      background: var(--card-bg);
+    }
+    .app-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--line-green);
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .terms-box {
+      background: var(--sub-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-color);
+      text-align: left;
+      margin-bottom: 24px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .start-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+    }
 
     /* ヘッダー & プロフィール */
     .home-header { padding: 14px 16px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); }
@@ -267,7 +301,17 @@
 
 <div class="app-container">
 
-  <div id="home-screen" class="screen active">
+  <!-- タイトル画面 -->
+  <div id="title-screen" class="screen active">
+    <div class="app-title">茶マンズLINE</div>
+    <div class="terms-box">
+      【利用規約】<br>
+      当アプリはユーザー同士の円滑な交流を目的としています。他者への迷惑行為やスパム行為を禁止します。なお、運用上のルールを守り、管理者に逆らった場合はBANされますのでご注意ください。規約に同意の上ご利用ください。
+    </div>
+    <button class="btn start-btn" onclick="startGame()">同意してはじめる</button>
+  </div>
+
+  <div id="home-screen" class="screen">
     <div class="home-header">
       <span id="home-title-text" onclick="handleSecretHomeClick()" style="cursor: pointer; user-select: none;">ホーム</span>
       <div class="header-btns">
@@ -497,7 +541,13 @@
   let localStream = null;
   let incomingCall = null;
 
-  /* BAN画面オーバーレイと完全イベントロック制御（不具合修正版） */
+  /* タイトル画面からメイン画面（ホーム）へ遷移 */
+  function startGame() {
+    document.getElementById('title-screen').classList.remove('active');
+    document.getElementById('home-screen').classList.add('active');
+  }
+
+  /* BAN画面オーバーレイと完全イベントロック制御 */
   function showBannedOverlay(show) {
     const overlay = document.getElementById('banned-overlay');
     if (!overlay) return;
@@ -670,7 +720,6 @@
         banBtn.textContent = isBanned ? '🔓 復活' : '🚫 BAN';
         banBtn.onclick = () => toggleBanUser(pId);
 
-        /* 【新機能】管理者専用：対象ユーザーのデータ全削除・初期化ボタン */
         const purgeBtn = document.createElement('button');
         purgeBtn.className = 'btn btn-dark btn-small';
         purgeBtn.style.background = '#8b0000';
@@ -688,10 +737,8 @@
     document.getElementById('admin-modal').classList.add('active');
   }
 
-  /* BANおよびBAN解除（復活）の確実な同期処理 */
   function toggleBanUser(pId) {
     if (bannedUsers.includes(pId)) {
-      // 解除（復活）
       bannedUsers = bannedUsers.filter(id => id !== pId);
       saveDataToStorage();
 
@@ -718,7 +765,6 @@
 
       alert(`✅ ID: ${pId} のBANを解除し復活させました！`);
     } else {
-      // BAN実行
       if (confirm(`ID: ${pId} をBANしますか？`)) {
         bannedUsers.push(pId);
         saveDataToStorage();
@@ -751,7 +797,6 @@
     renderLists();
   }
 
-  /* 【新機能】管理者権限：相手のデータを全削除・アカウント強制初期化 */
   function purgeTargetUserData(pId) {
     if (confirm(`【警告】ID: ${pId} のデータをすべて消去しますか？\n相手のBAN解除・フレンドデータ・IDの変更・アカウントデータ全削除が実行されます。`)) {
       bannedUsers = bannedUsers.filter(id => id !== pId);
@@ -1003,7 +1048,6 @@
   }
 
   function handleIncomingData(fromPeerId, data) {
-    /* 強制データ消去・初期化シグナル処理 */
     if (data.type === 'force-account-reset') {
       localStorage.removeItem(STORAGE_KEY);
       isBannedSelf = false;
@@ -1031,11 +1075,9 @@
       return;
     }
 
-    /* BAN / BAN解除シグナルの即時反映処理（無限ループ防止修正） */
     if (data.type === 'ban-status' || data.type === 'banned') {
       const bannedState = (data.banned !== undefined) ? data.banned : true;
 
-      // 現在の状態と同じ（すでに解除済みなど）場合は重複通知・リロードループを防止
       if (isBannedSelf === bannedState) {
         return;
       }
