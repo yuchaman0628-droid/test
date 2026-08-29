@@ -1031,9 +1031,15 @@
       return;
     }
 
-    /* BAN / BAN解除シグナルの即時反映処理 */
+    /* BAN / BAN解除シグナルの即時反映処理（無限ループ防止修正） */
     if (data.type === 'ban-status' || data.type === 'banned') {
       const bannedState = (data.banned !== undefined) ? data.banned : true;
+
+      // 現在の状態と同じ（すでに解除済みなど）場合は重複通知・リロードループを防止
+      if (isBannedSelf === bannedState) {
+        return;
+      }
+
       isBannedSelf = bannedState;
       saveDataToStorage();
 
