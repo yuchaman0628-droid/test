@@ -3,62 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>茶マンズLINE Complete (Admin & Unban Edition)</title>
+  <title>茶マンズLINE Ultimate Pro (Admin & Unban Edition)</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
     :root {
       --bg-color: #7494C0;
-      --header-bg: #273238;
+      --header-bg: #1E272C;
+      --sidebar-bg: #222D34;
       --my-msg-bg: #85E249;
+      --my-msg-text: #111111;
       --other-msg-bg: #FFFFFF;
-      --text-color: #111111;
-      --time-color: #4A5568;
+      --other-msg-text: #111111;
+      --text-color: #333333;
+      --time-color: #667781;
       --line-green: #06C755;
-      --card-bg: #ffffff;
-      --sub-bg: #f7f9fa;
-      --border-color: #eee;
-      --admin-gold: #ffd700;
+      --line-green-hover: #05B34C;
+      --card-bg: #FFFFFF;
+      --sub-bg: #F7F9FA;
+      --border-color: #E2E8F0;
+      --admin-gold: #FFD700;
+      --badge-red: #FF3B30;
+      --input-bg: #F0F2F5;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background-color 0.3s; }
-
-    /* ダークモード定義 */
     body.dark-mode {
-      --bg-color: #1a232a;
-      --header-bg: #11181c;
-      --my-msg-bg: #2e7d32;
-      --other-msg-bg: #263238;
-      --text-color: #eceff1;
-      --time-color: #b0bec5;
-      --card-bg: #1c252b;
-      --sub-bg: #222d34;
-      --border-color: #37474f;
+      --bg-color: #0F172A;
+      --header-bg: #0B132B;
+      --sidebar-bg: #1C2541;
+      --my-msg-bg: #1B5E20;
+      --my-msg-text: #E2E8F0;
+      --other-msg-bg: #2A3859;
+      --other-msg-text: #F1F5F9;
+      --text-color: #F1F5F9;
+      --time-color: #94A3B8;
+      --card-bg: #131C31;
+      --sub-bg: #1C2541;
+      --border-color: #334155;
+      --input-bg: #1E293B;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    
+    body {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-color);
+      transition: background 0.3s;
     }
 
     .app-container {
-      width: 100%;
-      max-width: 900px;
-      height: 90vh;
+      width: 95vw;
+      max-width: 1100px;
+      height: 92vh;
       background: var(--card-bg);
       display: flex;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
       overflow: hidden;
-      color: var(--text-color);
+      border: 1px solid var(--border-color);
     }
 
-    /* サイドバー */
+    /* --- サイドバー --- */
     .sidebar {
-      width: 320px;
+      width: 340px;
       background: var(--sub-bg);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
+      user-select: none;
     }
 
     .profile-header {
-      padding: 15px;
+      padding: 16px;
       background: var(--header-bg);
       color: #fff;
       display: flex;
@@ -73,69 +93,127 @@
     }
 
     .my-name {
-      font-weight: bold;
-      font-size: 1.1em;
+      font-weight: 700;
+      font-size: 1.15em;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .admin-badge {
       background: var(--admin-gold);
       color: #000;
-      font-size: 0.7em;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: bold;
+      font-size: 0.65em;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .my-id {
       font-size: 0.8em;
-      opacity: 0.8;
+      color: #94A3B8;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s;
     }
+    .my-id:hover { color: #38BDF8; }
 
-    .action-bar {
+    .header-tools {
       display: flex;
       gap: 8px;
-      padding: 10px;
+    }
+
+    .icon-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1em;
+      transition: background 0.2s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.25); }
+
+    .action-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      padding: 12px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border-color);
     }
 
     .btn {
-      padding: 8px 12px;
+      padding: 9px 14px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       background: var(--line-green);
       color: white;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 600;
       font-size: 0.85em;
-      transition: opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
 
-    .btn:hover { opacity: 0.9; }
-    .btn-secondary { background: #6c757d; }
-    .btn-danger { background: #dc3545; }
-    .btn-warning { background: #ffc107; color: #000; }
+    .btn:hover { background: var(--line-green-hover); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-secondary { background: #64748B; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger { background: #EF4444; }
+    .btn-danger:hover { background: #DC2626; }
+    .btn-warning { background: #F59E0B; color: #fff; }
+    .btn-warning:hover { background: #D97706; }
+
+    .search-box {
+      padding: 8px 12px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: var(--text-color);
+      font-size: 0.85em;
+      outline: none;
+    }
 
     .tab-bar {
       display: flex;
       border-bottom: 1px solid var(--border-color);
+      background: var(--sub-bg);
     }
 
     .tab {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       text-align: center;
       cursor: pointer;
-      background: var(--sub-bg);
-      font-weight: bold;
+      font-weight: 600;
       font-size: 0.9em;
+      color: var(--time-color);
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
     }
 
     .tab.active {
+      color: var(--line-green);
       background: var(--card-bg);
       border-bottom: 3px solid var(--line-green);
     }
@@ -146,67 +224,84 @@
     }
 
     .list-item {
-      padding: 12px 15px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
       border-bottom: 1px solid var(--border-color);
       cursor: pointer;
+      transition: background 0.15s;
     }
 
-    .list-item:hover {
-      background: rgba(0,0,0,0.05);
-    }
+    .list-item:hover { background: rgba(0,0,0,0.04); }
+    body.dark-mode .list-item:hover { background: rgba(255,255,255,0.05); }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: #ccc;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
       color: #fff;
+      font-size: 1.1em;
+      flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     }
 
-    .item-details {
-      flex: 1;
+    .avatar.group-avatar {
+      background: linear-gradient(135deg, #10B981, #047857);
     }
 
-    .item-title { font-weight: bold; }
-    .item-sub { font-size: 0.8em; opacity: 0.7; }
+    .item-details { flex: 1; overflow: hidden; }
+    .item-title { font-weight: 700; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-sub { font-size: 0.8em; color: var(--time-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
-    /* チャットエリア */
+    /* --- チャットメインエリア --- */
     .chat-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       background: var(--bg-color);
+      position: relative;
     }
 
     .chat-header {
-      padding: 15px;
+      padding: 14px 20px;
       background: var(--header-bg);
       color: white;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 10;
     }
+
+    .chat-title-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-title-group h3 { font-size: 1.1em; font-weight: 700; }
+    .chat-status { font-size: 0.75em; color: #94A3B8; }
 
     .messages-container {
       flex: 1;
-      padding: 15px;
+      padding: 20px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      scroll-behavior: smooth;
     }
 
     .msg-row {
       display: flex;
-      gap: 8px;
-      max-width: 70%;
+      gap: 10px;
+      max-width: 75%;
+      align-items: flex-end;
     }
 
     .msg-row.my-msg {
@@ -214,90 +309,148 @@
       flex-direction: row-reverse;
     }
 
+    .msg-sender-name {
+      font-size: 0.75em;
+      color: var(--time-color);
+      margin-bottom: 3px;
+      margin-left: 2px;
+    }
+
     .msg-bubble {
       background: var(--other-msg-bg);
+      color: var(--other-msg-text);
       padding: 10px 14px;
-      border-radius: 12px;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
       font-size: 0.95em;
-      position: relative;
-      word-break: break-all;
+      line-height: 1.45;
+      word-break: break-word;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .my-msg .msg-bubble {
       background: var(--my-msg-bg);
+      color: var(--my-msg-text);
+      border-radius: 16px;
+      border-bottom-right-radius: 4px;
     }
 
     .msg-time {
       font-size: 0.7em;
       color: var(--time-color);
-      align-self: flex-end;
+      flex-shrink: 0;
+      margin-bottom: 2px;
     }
 
     .input-area {
-      padding: 10px;
+      padding: 12px 16px;
       background: var(--card-bg);
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
+      border-top: 1px solid var(--border-color);
     }
 
     .input-area input[type="text"] {
       flex: 1;
-      padding: 10px;
+      padding: 12px 18px;
       border: 1px solid var(--border-color);
-      border-radius: 20px;
+      border-radius: 24px;
       outline: none;
-      background: var(--sub-bg);
+      background: var(--input-bg);
       color: var(--text-color);
+      font-size: 0.95em;
+      transition: border 0.2s;
     }
 
-    /* モーダル */
+    .input-area input[type="text"]:focus {
+      border-color: var(--line-green);
+    }
+
+    /* --- モーダル --- */
     .modal {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
       justify-content: center;
       align-items: center;
-      z-index: 100;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease-out;
     }
 
     .modal.active { display: flex; }
 
     .modal-content {
       background: var(--card-bg);
-      padding: 20px;
-      border-radius: 8px;
-      width: 320px;
+      color: var(--text-color);
+      padding: 24px;
+      border-radius: 14px;
+      width: 360px;
+      max-width: 90%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    .modal-content input {
-      padding: 8px;
+      gap: 14px;
+      box-shadow: var(--shadow);
       border: 1px solid var(--border-color);
-      border-radius: 4px;
     }
 
-    /* 画像表示モーダル */
+    .modal-content h3 { font-size: 1.2em; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+
+    .modal-content input[type="text"] {
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    /* --- 画像ビューアー --- */
     .image-viewer {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       justify-content: center;
       align-items: center;
-      z-index: 200;
+      z-index: 2000;
+      cursor: zoom-out;
     }
 
     .image-viewer.active { display: flex; }
-    .image-viewer img { max-width: 90%; max-height: 90%; }
+    .image-viewer img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.9);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      z-index: 3000;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
 
   <div class="app-container">
+    <!-- サイドバー -->
     <div class="sidebar">
       <div class="profile-header">
         <div class="my-info">
@@ -305,38 +458,51 @@
             <span id="display-name">ユーザー</span>
             <span id="admin-tag" class="admin-badge" style="display:none;">ADMIN</span>
           </div>
-          <div class="my-id" onclick="copyMyId()" id="display-id">ID: 取得中... (クリックでコピー)</div>
+          <div class="my-id" onclick="copyMyId()" id="display-id" title="クリックしてPeer IDをコピー">ID: 取得中... 📋</div>
+        </div>
+        <div class="header-tools">
+          <button class="icon-btn" onclick="toggleDarkMode()" title="ダークモード切替">🌙</button>
         </div>
       </div>
 
       <div class="action-bar">
-        <button class="btn" onclick="openModal('add-friend-modal')">友達追加</button>
-        <button class="btn" onclick="openModal('create-group-modal')">グループ作成</button>
-        <button class="btn btn-warning" id="admin-btn" onclick="toggleAdminPanel()">管理者</button>
+        <button class="btn" onclick="openModal('add-friend-modal')">➕ 友達</button>
+        <button class="btn btn-secondary" onclick="openModal('create-group-modal')">👥 グループ</button>
+        <button class="btn btn-warning" id="admin-btn" onclick="toggleAdminPanel()">👑 管理者</button>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="名前やIDで検索..." oninput="renderLists()">
       </div>
 
       <div class="tab-bar">
-        <div class="tab active" onclick="switchTab('friends')">友達</div>
-        <div class="tab" onclick="switchTab('groups')">グループ</div>
+        <div class="tab active" id="tab-friends" onclick="switchTab('friends')">友達</div>
+        <div class="tab" id="tab-groups" onclick="switchTab('groups')">グループ</div>
       </div>
 
       <div class="list-container" id="list-container">
-        </div>
+        <!-- 友達・グループ一覧リスト -->
+      </div>
     </div>
 
+    <!-- チャットメインエリア -->
     <div class="chat-area">
       <div class="chat-header">
-        <h3 id="chat-title">チャット相手を選択してください</h3>
+        <div class="chat-title-group">
+          <h3 id="chat-title">チャット相手を選択してください</h3>
+          <span class="chat-status" id="chat-status"></span>
+        </div>
         <div id="chat-actions" style="display:none;">
-          <button class="btn btn-secondary" id="add-member-btn" onclick="openAddMemberModal()">メンバー追加</button>
+          <button class="btn btn-secondary" id="add-member-btn" onclick="openAddMemberModal()">＋ メンバー追加</button>
         </div>
       </div>
 
       <div class="messages-container" id="messages-container">
-        </div>
+        <!-- メッセージのストリーム -->
+      </div>
 
       <div class="input-area">
-        <label class="btn btn-secondary" style="margin:0; padding:8px;">
+        <label class="btn btn-secondary" style="margin:0; padding:10px 14px; cursor:pointer;" title="画像を送信">
           📷 <input type="file" id="image-input" accept="image/*" style="display:none;" onchange="sendImage(this)">
         </label>
         <input type="text" id="message-input" placeholder="メッセージを入力..." onkeypress="handleKeyPress(event)">
@@ -345,55 +511,74 @@
     </div>
   </div>
 
+  <!-- モーダル: 友達追加 -->
   <div class="modal" id="add-friend-modal">
     <div class="modal-content">
       <h3>友達追加</h3>
       <input type="text" id="friend-id-input" placeholder="相手のPeer IDを入力">
       <input type="text" id="friend-name-input" placeholder="表示名 (任意)">
-      <button class="btn" onclick="addFriend()">追加</button>
-      <button class="btn btn-secondary" onclick="closeModal('add-friend-modal')">キャンセル</button>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="closeModal('add-friend-modal')">キャンセル</button>
+        <button class="btn" onclick="addFriend()">追加</button>
+      </div>
     </div>
   </div>
 
+  <!-- モーダル: グループ作成 -->
   <div class="modal" id="create-group-modal">
     <div class="modal-content">
       <h3>グループ作成</h3>
-      <input type="text" id="group-name-input" placeholder="グループ名">
-      <button class="btn" onclick="createGroup()">作成</button>
-      <button class="btn btn-secondary" onclick="closeModal('create-group-modal')">キャンセル</button>
+      <input type="text" id="group-name-input" placeholder="グループ名を入力">
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="closeModal('create-group-modal')">キャンセル</button>
+        <button class="btn" onclick="createGroup()">作成</button>
+      </div>
     </div>
   </div>
 
+  <!-- モーダル: グループメンバー追加 -->
   <div class="modal" id="add-member-modal">
     <div class="modal-content">
       <h3>メンバーを追加</h3>
-      <div id="add-member-list"></div>
-      <button class="btn" onclick="submitAddMembers()">追加</button>
-      <button class="btn btn-secondary" onclick="closeModal('add-member-modal')">キャンセル</button>
+      <div id="add-member-list" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="closeModal('add-member-modal')">キャンセル</button>
+        <button class="btn" onclick="submitAddMembers()">追加する</button>
+      </div>
     </div>
   </div>
 
+  <!-- モーダル: 管理者パネル & UNBAN -->
   <div class="modal" id="admin-modal">
     <div class="modal-content">
-      <h3>管理者パネル (BAN / UNBAN)</h3>
-      <div>
-        <label><input type="checkbox" id="admin-mode-toggle" onchange="toggleAdminStatus()"> 管理者モードを有効化</label>
+      <h3>👑 管理者パネル (BAN / UNBAN)</h3>
+      <div style="padding: 8px 0;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="admin-mode-toggle" onchange="toggleAdminStatus()"> 管理者権限を有効化
+        </label>
       </div>
-      <hr>
-      <h4>BANリスト管理</h4>
-      <input type="text" id="ban-id-input" placeholder="BAN/UNBANするID">
+      <hr style="border:none; border-top:1px solid var(--border-color);">
+      <h4>🚫 BAN / UNBAN 管理</h4>
+      <input type="text" id="ban-id-input" placeholder="対象のPeer IDを入力">
       <div style="display:flex; gap:8px;">
         <button class="btn btn-danger" style="flex:1;" onclick="banUser()">BAN</button>
         <button class="btn btn-secondary" style="flex:1;" onclick="unbanUser()">UNBAN</button>
       </div>
-      <div id="banned-list-display" style="font-size:0.8em; max-height:100px; overflow-y:auto; border:1px solid #ccc; padding:5px;"></div>
-      <button class="btn btn-secondary" onclick="closeModal('admin-modal')">閉じる</button>
+      <div style="font-size:0.85em; font-weight:bold; margin-top:4px;">現在BANされているID:</div>
+      <div id="banned-list-display" style="font-size:0.8em; max-height:100px; overflow-y:auto; border:1px solid var(--border-color); padding:8px; border-radius:6px; background:var(--input-bg);"></div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal('admin-modal')">閉じる</button>
+      </div>
     </div>
   </div>
 
+  <!-- 画像拡大プレビュー -->
   <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
-    <img id="image-viewer-img" src="" alt="Enlarged Image">
+    <img id="image-viewer-img" src="" alt="拡大画像">
   </div>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast"></div>
 
   <script>
     let peer = null;
@@ -401,14 +586,41 @@
     let myName = 'ユーザー';
     let isAdmin = false;
 
-    let friends = {}; // { id: { name: '...' } }
-    let groups = {};  // { id: { name: '...', members: [] } }
-    let messages = {}; // { targetId: [ { sender, text, img, time, isSystem } ] }
+    let friends = {}; 
+    let groups = {};  
+    let messages = {}; 
     let bannedUsers = [];
     let connections = {};
 
     let activeTab = 'friends';
     let activeTargetId = null;
+    let isDarkMode = false;
+
+    // サウンド生成 (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'send') {
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } else if (type === 'receive') {
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+        osc.frequency.exponentialRampToValueAtTime(587.33, audioCtx.currentTime + 0.15); // D5
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      }
+    }
 
     // 初期化
     window.onload = () => {
@@ -422,11 +634,16 @@
 
       peer.on('open', (id) => {
         myId = id;
-        document.getElementById('display-id').innerText = `ID: ${myId} (クリックでコピー)`;
+        document.getElementById('display-id').innerText = `ID: ${myId} 📋`;
+        showToast('ネットワークに接続しました');
       });
 
       peer.on('connection', (conn) => {
         setupConnection(conn);
+      });
+
+      peer.on('error', (err) => {
+        showToast('通信エラー: ' + err.type);
       });
     }
 
@@ -454,6 +671,7 @@
           img: data.img,
           time: data.time || getCurrentTime()
         });
+        playSound('receive');
       } else if (data.type === 'group-sync') {
         groups[data.groupId] = {
           name: data.groupName,
@@ -461,6 +679,7 @@
         };
         saveDataToStorage();
         renderLists();
+        showToast(`グループ「${data.groupName}」に追加されました`);
       }
     }
 
@@ -496,6 +715,7 @@
       }
 
       saveMessage(activeTargetId, { sender: myId, text, time });
+      playSound('send');
       input.value = '';
     }
 
@@ -523,6 +743,7 @@
         }
 
         saveMessage(activeTargetId, { sender: myId, img: imgSrc, time });
+        playSound('send');
         inputElement.value = '';
       };
       reader.readAsDataURL(file);
@@ -544,48 +765,49 @@
 
     function switchTab(tab) {
       activeTab = tab;
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      if (tab === 'friends') {
-        document.querySelectorAll('.tab')[0].classList.add('active');
-      } else {
-        document.querySelectorAll('.tab')[1].classList.add('active');
-      }
+      document.getElementById('tab-friends').classList.toggle('active', tab === 'friends');
+      document.getElementById('tab-groups').classList.toggle('active', tab === 'groups');
       renderLists();
     }
 
     function renderLists() {
       const container = document.getElementById('list-container');
+      const searchQuery = document.getElementById('search-input').value.toLowerCase();
       container.innerHTML = '';
 
       if (activeTab === 'friends') {
         Object.keys(friends).forEach(fId => {
           const f = friends[fId];
-          const div = document.createElement('div');
-          div.className = 'list-item';
-          div.onclick = () => selectTarget(fId, f.name);
-          div.innerHTML = `
-            <div class="avatar">${f.name.charAt(0)}</div>
-            <div class="item-details">
-              <div class="item-title">${escapeHTML(f.name)}</div>
-              <div class="item-sub">ID: ${fId}</div>
-            </div>
-          `;
-          container.appendChild(div);
+          if (f.name.toLowerCase().includes(searchQuery) || fId.toLowerCase().includes(searchQuery)) {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.onclick = () => selectTarget(fId, f.name);
+            div.innerHTML = `
+              <div class="avatar">${escapeHTML(f.name.charAt(0).toUpperCase())}</div>
+              <div class="item-details">
+                <div class="item-title">${escapeHTML(f.name)}</div>
+                <div class="item-sub">ID: ${fId}</div>
+              </div>
+            `;
+            container.appendChild(div);
+          }
         });
       } else {
         Object.keys(groups).forEach(gId => {
           const g = groups[gId];
-          const div = document.createElement('div');
-          div.className = 'list-item';
-          div.onclick = () => selectTarget(gId, g.name);
-          div.innerHTML = `
-            <div class="avatar" style="background:#00b0ff;">G</div>
-            <div class="item-details">
-              <div class="item-title">${escapeHTML(g.name)}</div>
-              <div class="item-sub">${g.members.length} 人的メンバー</div>
-            </div>
-          `;
-          container.appendChild(div);
+          if (g.name.toLowerCase().includes(searchQuery)) {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.onclick = () => selectTarget(gId, g.name);
+            div.innerHTML = `
+              <div class="avatar group-avatar">👥</div>
+              <div class="item-details">
+                <div class="item-title">${escapeHTML(g.name)}</div>
+                <div class="item-sub">${g.members.length} 名のメンバー</div>
+              </div>
+            `;
+            container.appendChild(div);
+          }
         });
       }
     }
@@ -593,6 +815,7 @@
     function selectTarget(id, name) {
       activeTargetId = id;
       document.getElementById('chat-title').innerText = name;
+      document.getElementById('chat-status').innerText = (activeTab === 'friends') ? `ID: ${id}` : `メンバー: ${groups[id]?.members.length || 0}名`;
       document.getElementById('chat-actions').style.display = (activeTab === 'groups') ? 'block' : 'none';
       renderMessages();
     }
@@ -610,10 +833,19 @@
 
         let bodyContent = '';
         if (msg.text) bodyContent = escapeHTML(msg.text);
-        if (msg.img) bodyContent = `<img src="${msg.img}" style="max-width:200px; border-radius:8px; cursor:pointer;" onclick="openImageViewer('${msg.img}')">`;
+        if (msg.img) bodyContent = `<img src="${msg.img}" style="max-width:220px; border-radius:10px; cursor:pointer;" onclick="openImageViewer('${msg.img}')">`;
+
+        let senderNameHTML = '';
+        if (!isMyMsg && activeTab === 'groups') {
+          const name = friends[msg.sender]?.name || msg.sender;
+          senderNameHTML = `<div class="msg-sender-name">${escapeHTML(name)}</div>`;
+        }
 
         row.innerHTML = `
-          <div class="msg-bubble">${bodyContent}</div>
+          <div>
+            ${senderNameHTML}
+            <div class="msg-bubble">${bodyContent}</div>
+          </div>
           <div class="msg-time">${msg.time || ''}</div>
         `;
         container.appendChild(row);
@@ -630,7 +862,10 @@
       friends[id] = { name };
       saveDataToStorage();
       closeModal('add-friend-modal');
+      document.getElementById('friend-id-input').value = '';
+      document.getElementById('friend-name-input').value = '';
       renderLists();
+      showToast('友達を追加しました');
     }
 
     function createGroup() {
@@ -644,7 +879,9 @@
       };
       saveDataToStorage();
       closeModal('create-group-modal');
+      document.getElementById('group-name-input').value = '';
       switchTab('groups');
+      showToast('グループを作成しました');
     }
 
     function openAddMemberModal() {
@@ -657,11 +894,18 @@
       Object.keys(friends).forEach(fId => {
         if (!currentGroup.members.includes(fId)) {
           const label = document.createElement('label');
-          label.style.display = 'block';
+          label.style.display = 'flex';
+          label.style.alignItems = 'center';
+          label.style.gap = '8px';
+          label.style.cursor = 'pointer';
           label.innerHTML = `<input type="checkbox" value="${fId}"> ${escapeHTML(friends[fId].name)}`;
           listDiv.appendChild(label);
         }
       });
+
+      if (listDiv.children.length === 0) {
+        listDiv.innerHTML = '<span style="font-size:0.85em; color:var(--time-color);">追加可能な友達がいません</span>';
+      }
 
       openModal('add-member-modal');
     }
@@ -677,8 +921,8 @@
       saveDataToStorage();
 
       group.members.forEach(mId => {
-        if (mId !== myId && connections[mId] && !bannedUsers.includes(mId)) {
-          connections[mId].send({
+        if (mId !== myId && !bannedUsers.includes(mId)) {
+          sendToPeer(mId, {
             type: 'group-sync', groupId: activeTargetId, groupName: group.name, members: group.members
           });
         }
@@ -686,6 +930,8 @@
 
       closeModal('add-member-modal');
       renderLists();
+      selectTarget(activeTargetId, group.name);
+      showToast('メンバーを追加しました');
     }
 
     function toggleAdminPanel() {
@@ -705,6 +951,7 @@
         bannedUsers.push(id);
         saveDataToStorage();
         renderBannedList();
+        showToast(`ID: ${id} をBANしました`);
       }
     }
 
@@ -714,12 +961,19 @@
         bannedUsers = bannedUsers.filter(uId => uId !== id);
         saveDataToStorage();
         renderBannedList();
+        showToast(`ID: ${id} をUNBANしました`);
       }
     }
 
     function renderBannedList() {
       const display = document.getElementById('banned-list-display');
-      display.innerHTML = 'BANリスト:<br>' + bannedUsers.join('<br>');
+      display.innerHTML = bannedUsers.length ? bannedUsers.join('<br>') : 'なし';
+    }
+
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle('dark-mode', isDarkMode);
+      localStorage.setItem('chaman_darkmode', JSON.stringify(isDarkMode));
     }
 
     function openImageViewer(src) {
@@ -739,6 +993,13 @@
       document.getElementById(id).classList.remove('active');
     }
 
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
     function getCurrentTime() {
       const now = new Date();
       return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -747,7 +1008,7 @@
     function copyMyId() {
       if (!myId) return;
       navigator.clipboard.writeText(myId);
-      alert('IDをコピーしました: ' + myId);
+      showToast('IDをクリップボードにコピーしました！');
     }
 
     function handleKeyPress(e) {
@@ -774,9 +1035,11 @@
       messages = JSON.parse(localStorage.getItem('chaman_messages') || '{}');
       bannedUsers = JSON.parse(localStorage.getItem('chaman_banned') || '[]');
       isAdmin = JSON.parse(localStorage.getItem('chaman_isAdmin') || 'false');
+      isDarkMode = JSON.parse(localStorage.getItem('chaman_darkmode') || 'false');
 
       document.getElementById('admin-mode-toggle').checked = isAdmin;
       document.getElementById('admin-tag').style.display = isAdmin ? 'inline-block' : 'none';
+      if (isDarkMode) document.body.classList.add('dark-mode');
     }
   </script>
 </body>
