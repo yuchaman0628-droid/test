@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Web Piano with Interactive Sheet</title>
+    <title>Web Keyboard Piano</title>
     <style>
         * {
             box-sizing: border-box;
@@ -25,9 +25,16 @@
 
         h1 { margin: 10px 0; font-size: 24px; }
 
+        .keyboard-guide-info {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
         /* コントロールパネル */
         .controls {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             display: flex;
             gap: 10px;
             align-items: center;
@@ -35,7 +42,7 @@
 
         select, button {
             padding: 8px 16px;
-            font-size: 16px;
+            font-size: 15px;
             border-radius: 5px;
             border: none;
             cursor: pointer;
@@ -52,24 +59,25 @@
             background: #222;
             border: 2px solid #444;
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             margin-bottom: 20px;
             text-align: center;
         }
 
-        .sheet-title { font-size: 18px; color: #ffa502; margin-bottom: 10px; }
+        .sheet-title { font-size: 16px; color: #ffa502; margin-bottom: 8px; }
         .notes-display {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            font-size: 20px;
+            gap: 8px;
+            font-size: 16px;
             font-weight: bold;
-            min-height: 40px;
+            min-height: 35px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .note-badge {
-            padding: 6px 12px;
+            padding: 4px 8px;
             background: #333;
             border-radius: 4px;
             border: 1px solid #555;
@@ -79,10 +87,10 @@
             background: #2ed573;
             color: #000;
             border-color: #2ed573;
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
-        /* 拡大したピアノ容器 */
+        /* 鍵盤エリア */
         .piano-scroll-wrapper {
             width: 100%;
             max-width: 1000px;
@@ -100,7 +108,7 @@
             margin: 0 auto;
         }
 
-        /* 鍵盤サイズを拡大 (幅60px / 高さ240px) */
+        /* 白鍵 */
         .white-key {
             width: 55px;
             height: 240px;
@@ -108,9 +116,10 @@
             border: 1px solid #ccc;
             border-radius: 0 0 5px 5px;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 15px;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 12px;
             color: #333;
             font-weight: bold;
             cursor: pointer;
@@ -118,12 +127,29 @@
             z-index: 1;
         }
 
+        /* PCキーのガイド表示 */
+        .pc-key-label {
+            font-size: 16px;
+            color: #ff4757;
+            background: #ffeaa7;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .note-label {
+            font-size: 12px;
+            color: #666;
+        }
+
         .white-key.active, .white-key.guide {
-            background: #747d8c;
+            background: #dcdde1;
             transform: translateY(2px);
         }
         .white-key.guide { background: #2ed573 !important; color: #000; }
 
+        /* 黒鍵 */
         .black-key {
             width: 34px;
             height: 145px;
@@ -134,11 +160,18 @@
             cursor: pointer;
             margin-left: -17px;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 10px;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 8px;
             color: #fff;
-            font-size: 11px;
+        }
+
+        .black-key .pc-key-label {
+            font-size: 12px;
+            background: #ff6b81;
+            color: #fff;
+            padding: 1px 4px;
         }
 
         .black-key.active, .black-key.guide { background: #57606f; }
@@ -147,7 +180,12 @@
 </head>
 <body>
 
-    <h1>🎹 インタラクティブ・ピアノ 🎹</h1>
+    <h1>🎹 キーボード対応ピアノ 🎹</h1>
+    <div class="keyboard-guide-info">
+        PCのキーボードでそのまま演奏できます！<br>
+        【低いオクターブ】白鍵: Z X C V B N M / 黒鍵: S D G H J<br>
+        【高いオクターブ】白鍵: Q W E R T Y U I O / 黒鍵: 2 3 5 6 7
+    </div>
 
     <div class="controls">
         <select id="songSelect">
@@ -162,35 +200,33 @@
     <div class="sheet-container">
         <div class="sheet-title" id="songTitle">演奏ガイド</div>
         <div class="notes-display" id="notesDisplay">
-            曲を選んで「お手本演奏」を押すか、自力で弾いてみましょう！
+            曲を選んで「お手本演奏」を押すか、キーボードで演奏してみましょう！
         </div>
     </div>
 
-    <!-- 拡大・拡張版鍵盤 (2オクターブ超) -->
+    <!-- 拡大・拡張版鍵盤 -->
     <div class="piano-scroll-wrapper">
         <div class="piano-container" id="piano">
-            <!-- 白鍵 -->
-            <div class="white-key" data-note="C3">C3<br>(ド)</div>
-            <div class="white-key" data-note="D3">D3<br>(レ)</div>
-            <div class="white-key" data-note="E3">E3<br>(ミ)</div>
-            <div class="white-key" data-note="F3">F3<br>(ファ)</div>
-            <div class="white-key" data-note="G3">G3<br>(ソ)</div>
-            <div class="white-key" data-note="A3">A3<br>(ラ)</div>
-            <div class="white-key" data-note="B3">B3<br>(シ)</div>
+            <!-- 白鍵（低音: Z X C... / 高音: Q W E...） -->
+            <div class="white-key" data-note="C3" data-key="z"><span class="pc-key-label">Z</span><span class="note-label">ド</span></div>
+            <div class="white-key" data-note="D3" data-key="x"><span class="pc-key-label">X</span><span class="note-label">レ</span></div>
+            <div class="white-key" data-note="E3" data-key="c"><span class="pc-key-label">C</span><span class="note-label">ミ</span></div>
+            <div class="white-key" data-note="F3" data-key="v"><span class="pc-key-label">V</span><span class="note-label">ファ</span></div>
+            <div class="white-key" data-note="G3" data-key="b"><span class="pc-key-label">B</span><span class="note-label">ソ</span></div>
+            <div class="white-key" data-note="A3" data-key="n"><span class="pc-key-label">N</span><span class="note-label">ラ</span></div>
+            <div class="white-key" data-note="B3" data-key="m"><span class="pc-key-label">M</span><span class="note-label">シ</span></div>
 
-            <div class="white-key" data-note="C4">C4<br>(ド)</div>
-            <div class="white-key" data-note="D4">D4<br>(レ)</div>
-            <div class="white-key" data-note="E4">E4<br>(ミ)</div>
-            <div class="white-key" data-note="F4">F4<br>(ファ)</div>
-            <div class="white-key" data-note="G4">G4<br>(ソ)</div>
-            <div class="white-key" data-note="A4">A4<br>(ラ)</div>
-            <div class="white-key" data-note="B4">B4<br>(シ)</div>
+            <div class="white-key" data-note="C4" data-key="q"><span class="pc-key-label">Q</span><span class="note-label">ド</span></div>
+            <div class="white-key" data-note="D4" data-key="w"><span class="pc-key-label">W</span><span class="note-label">レ</span></div>
+            <div class="white-key" data-note="E4" data-key="e"><span class="pc-key-label">E</span><span class="note-label">ミ</span></div>
+            <div class="white-key" data-note="F4" data-key="r"><span class="pc-key-label">R</span><span class="note-label">ファ</span></div>
+            <div class="white-key" data-note="G4" data-key="t"><span class="pc-key-label">T</span><span class="note-label">ソ</span></div>
+            <div class="white-key" data-note="A4" data-key="y"><span class="pc-key-label">Y</span><span class="note-label">ラ</span></div>
+            <div class="white-key" data-note="B4" data-key="u"><span class="pc-key-label">U</span><span class="note-label">シ</span></div>
 
-            <div class="white-key" data-note="C5">C5<br>(ド)</div>
-            <div class="white-key" data-note="D5">D5<br>(レ)</div>
-            <div class="white-key" data-note="E5">E5<br>(ミ)</div>
-
-            <!-- 黒鍵（自動配置） -->
+            <div class="white-key" data-note="C5" data-key="i"><span class="pc-key-label">I</span><span class="note-label">ド</span></div>
+            <div class="white-key" data-note="D5" data-key="o"><span class="pc-key-label">O</span><span class="note-label">レ</span></div>
+            <div class="white-key" data-note="E5" data-key="p"><span class="pc-key-label">P</span><span class="note-label">ミ</span></div>
         </div>
     </div>
 
@@ -202,48 +238,48 @@
             'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25
         };
 
-        // 楽曲データ（楽譜とリズム情報）
+        // 楽曲データ
         const songs = {
             twinkle: {
-                title: "きらきら星",
+                title: "きらきら星 (キー: Q Q T T Y Y T...)",
                 notes: [
-                    { note: 'C4', duration: 400 }, { note: 'C4', duration: 400 },
-                    { note: 'G4', duration: 400 }, { note: 'G4', duration: 400 },
-                    { note: 'A4', duration: 400 }, { note: 'A4', duration: 400 },
-                    { note: 'G4', duration: 800 },
-                    { note: 'F4', duration: 400 }, { note: 'F4', duration: 400 },
-                    { note: 'E4', duration: 400 }, { note: 'E4', duration: 400 },
-                    { note: 'D4', duration: 400 }, { note: 'D4', duration: 400 },
-                    { note: 'C4', duration: 800 }
+                    { note: 'C4', key: 'Q', duration: 400 }, { note: 'C4', key: 'Q', duration: 400 },
+                    { note: 'G4', key: 'T', duration: 400 }, { note: 'G4', key: 'T', duration: 400 },
+                    { note: 'A4', key: 'Y', duration: 400 }, { note: 'A4', key: 'Y', duration: 400 },
+                    { note: 'G4', key: 'T', duration: 800 },
+                    { note: 'F4', key: 'R', duration: 400 }, { note: 'F4', key: 'R', duration: 400 },
+                    { note: 'E4', key: 'E', duration: 400 }, { note: 'E4', key: 'E', duration: 400 },
+                    { note: 'D4', key: 'W', duration: 400 }, { note: 'D4', key: 'W', duration: 400 },
+                    { note: 'C4', key: 'Q', duration: 800 }
                 ]
             },
             tulip: {
-                title: "チューリップ",
+                title: "チューリップ (キー: Q W E / Q W E...)",
                 notes: [
-                    { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 800 },
-                    { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 800 },
-                    { note: 'G4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'C4', duration: 400 },
-                    { note: 'D4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 800 }
+                    { note: 'C4', key: 'Q', duration: 400 }, { note: 'D4', key: 'W', duration: 400 }, { note: 'E4', key: 'E', duration: 800 },
+                    { note: 'C4', key: 'Q', duration: 400 }, { note: 'D4', key: 'W', duration: 400 }, { note: 'E4', key: 'E', duration: 800 },
+                    { note: 'G4', key: 'T', duration: 400 }, { note: 'E4', key: 'E', duration: 400 }, { note: 'D4', key: 'W', duration: 400 }, { note: 'C4', key: 'Q', duration: 400 },
+                    { note: 'D4', key: 'W', duration: 400 }, { note: 'E4', key: 'E', duration: 400 }, { note: 'D4', key: 'W', duration: 800 }
                 ]
             },
             joy: {
-                title: "歓喜の歌",
+                title: "歓喜の歌 (キー: E E R T / T R E W...)",
                 notes: [
-                    { note: 'E4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'F4', duration: 400 }, { note: 'G4', duration: 400 },
-                    { note: 'G4', duration: 400 }, { note: 'F4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 400 },
-                    { note: 'C4', duration: 400 }, { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 400 },
-                    { note: 'E4', duration: 600 }, { note: 'D4', duration: 200 }, { note: 'D4', duration: 800 }
+                    { note: 'E4', key: 'E', duration: 400 }, { note: 'E4', key: 'E', duration: 400 }, { note: 'F4', key: 'R', duration: 400 }, { note: 'G4', key: 'T', duration: 400 },
+                    { note: 'G4', key: 'T', duration: 400 }, { note: 'F4', key: 'R', duration: 400 }, { note: 'E4', key: 'E', duration: 400 }, { note: 'D4', key: 'W', duration: 400 },
+                    { note: 'C4', key: 'Q', duration: 400 }, { note: 'C4', key: 'Q', duration: 400 }, { note: 'D4', key: 'W', duration: 400 }, { note: 'E4', key: 'E', duration: 400 },
+                    { note: 'E4', key: 'E', duration: 600 }, { note: 'D4', key: 'W', duration: 200 }, { note: 'D4', key: 'W', duration: 800 }
                 ]
             }
         };
 
-        // 黒鍵の自動配置処理
+        // 黒鍵の自動配置（鍵盤＆対応PCキー）
         const blackKeyPositions = [
-            { note: 'C#3', left: 38 }, { note: 'D#3', left: 93 },
-            { note: 'F#3', left: 203 }, { note: 'G#3', left: 258 }, { note: 'A#3', left: 313 },
-            { note: 'C#4', left: 423 }, { note: 'D#4', left: 478 },
-            { note: 'F#4', left: 588 }, { note: 'G#4', left: 643 }, { note: 'A#4', left: 698 },
-            { note: 'C#5', left: 808 }, { note: 'D#5', left: 863 }
+            { note: 'C#3', left: 38, key: 's' }, { note: 'D#3', left: 93, key: 'd' },
+            { note: 'F#3', left: 203, key: 'g' }, { note: 'G#3', left: 258, key: 'h' }, { note: 'A#3', left: 313, key: 'j' },
+            { note: 'C#4', left: 423, key: '2' }, { note: 'D#4', left: 478, key: '3' },
+            { note: 'F#4', left: 588, key: '5' }, { note: 'G#4', left: 643, key: '6' }, { note: 'A#4', left: 698, key: '7' },
+            { note: 'C#5', left: 808, key: '9' }, { note: 'D#5', left: 863, key: '0' }
         ];
 
         const piano = document.getElementById('piano');
@@ -252,11 +288,12 @@
             el.className = 'black-key';
             el.style.left = `${bk.left}px`;
             el.setAttribute('data-note', bk.note);
-            el.innerText = bk.note.replace('4','').replace('3','').replace('5','');
+            el.setAttribute('data-key', bk.key);
+            el.innerHTML = `<span class="pc-key-label">${bk.key.toUpperCase()}</span>`;
             piano.appendChild(el);
         });
 
-        // サウンド再生エンジン
+        // Web Audio API
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -272,16 +309,15 @@
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
 
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
             osc.start();
-            osc.stop(audioCtx.currentTime + 1.0);
+            osc.stop(audioCtx.currentTime + 1.2);
         }
 
-        // キーを押す・視覚効果処理
         function triggerKey(keyElement, isGuide = false) {
             if (!keyElement) return;
             const note = keyElement.getAttribute('data-note');
@@ -292,7 +328,7 @@
             setTimeout(() => keyElement.classList.remove(activeClass), 200);
         }
 
-        // クリック／タップイベント登録
+        // マウス／タッチ入力
         document.querySelectorAll('.white-key, .black-key').forEach(key => {
             key.addEventListener('mousedown', () => triggerKey(key));
             key.addEventListener('touchstart', (e) => {
@@ -301,7 +337,17 @@
             });
         });
 
-        // 自動演奏とガイド楽譜機能
+        // PCキーボード入力対応
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return; // 長押し連続検知の防止
+            const pressedKey = e.key.toLowerCase();
+            const targetKey = document.querySelector(`[data-key="${pressedKey}"]`);
+            if (targetKey) {
+                triggerKey(targetKey);
+            }
+        });
+
+        // デモ再生機能
         let isPlaying = false;
         async function playDemo() {
             if (isPlaying) return;
@@ -312,13 +358,12 @@
             document.getElementById('songTitle').innerText = `演奏中: ${song.title}`;
 
             const display = document.getElementById('notesDisplay');
-            display.innerHTML = song.notes.map((n, i) => `<span class="note-badge" id="badge-${i}">${n.note}</span>`).join('');
+            display.innerHTML = song.notes.map((n, i) => `<span class="note-badge" id="badge-${i}">${n.key} (${n.note})</span>`).join('');
 
             for (let i = 0; i < song.notes.length; i++) {
                 const item = song.notes[i];
                 const badge = document.getElementById(`badge-${i}`);
                 
-                // ガイド強調
                 if (badge) badge.classList.add('current');
                 const keyEl = document.querySelector(`[data-note="${item.note}"]`);
                 triggerKey(keyEl, true);
@@ -327,7 +372,7 @@
                 if (badge) badge.classList.remove('current');
             }
 
-            document.getElementById('songTitle').innerText = '演奏完了！自分で弾いてみよう';
+            document.getElementById('songTitle').innerText = '演奏完了！表示されているPCキーを押して弾いてみよう';
             isPlaying = false;
         }
 
