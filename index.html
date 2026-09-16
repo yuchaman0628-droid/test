@@ -21,6 +21,21 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background 0.5s ease;
+        }
+
+        /* --- 背景テーマ設定 --- */
+        body.bg-dark {
+            background-color: #1a1a1a;
+        }
+        body.bg-stage {
+            background: radial-gradient(circle at center, #2b1055 0%, #000000 100%);
+        }
+        body.bg-wood {
+            background: #2d1e18 radial-gradient(circle, #3d2b1f 0%, #1a0f0a 100%);
+        }
+        body.bg-cyber {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
         }
 
         h1 { margin: 10px 0; font-size: 24px; }
@@ -38,6 +53,8 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         select, button {
@@ -52,16 +69,26 @@
         button { background: #ff4757; color: white; font-weight: bold; }
         button:hover { background: #ff6b81; }
 
+        .pedal-btn {
+            background: #555;
+            color: #fff;
+        }
+        .pedal-btn.active {
+            background: #2ed573;
+            color: #000;
+        }
+
         /* 簡易楽譜ディスプレイ */
         .sheet-container {
             width: 100%;
             max-width: 900px;
-            background: #222;
+            background: rgba(34, 34, 34, 0.8);
             border: 2px solid #444;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 20px;
             text-align: center;
+            backdrop-filter: blur(5px);
         }
 
         .sheet-title { font-size: 16px; color: #ffa502; margin-bottom: 8px; }
@@ -95,7 +122,7 @@
             width: 100%;
             max-width: 1000px;
             overflow-x: auto;
-            background: #000;
+            background: rgba(0, 0, 0, 0.8);
             padding: 15px 10px;
             border-radius: 10px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.6);
@@ -178,13 +205,14 @@
         .black-key.guide { background: #2ed573 !important; color: #000; }
     </style>
 </head>
-<body>
+<body class="bg-dark">
 
     <h1>🎹 キーボード対応ピアノ 🎹</h1>
     <div class="keyboard-guide-info">
         PCのキーボードでそのまま演奏できます！<br>
         【低いオクターブ】白鍵: Z X C V B N M / 黒鍵: S D G H J<br>
-        【高いオクターブ】白鍵: Q W E R T Y U I O / 黒鍵: 2 3 5 6 7
+        【高いオクターブ】白鍵: Q W E R T Y U I O / 黒鍵: 2 3 5 6 7<br>
+        <b>【音を伸ばす】Spaceキーを押す（またはペダルON）</b>
     </div>
 
     <div class="controls">
@@ -194,6 +222,17 @@
             <option value="joy">歓喜の歌（ベートーヴェン）</option>
         </select>
         <button id="playDemoBtn">お手本演奏を聴く</button>
+        
+        <!-- 背景切替 -->
+        <select id="bgSelect">
+            <option value="bg-dark">背景: ダーク</option>
+            <option value="bg-stage">背景: ステージ</option>
+            <option value="bg-wood">背景: 木目調</option>
+            <option value="bg-cyber">背景: サイバー</option>
+        </select>
+
+        <!-- ペダルボタン -->
+        <button id="pedalBtn" class="pedal-btn">ペダル: OFF [Space]</button>
     </div>
 
     <!-- 簡易楽譜表示エリア -->
@@ -273,7 +312,7 @@
             }
         };
 
-        // 黒鍵の自動配置（鍵盤＆対応PCキー）
+        // 黒鍵の自動配置
         const blackKeyPositions = [
             { note: 'C#3', left: 38, key: 's' }, { note: 'D#3', left: 93, key: 'd' },
             { note: 'F#3', left: 203, key: 'g' }, { note: 'G#3', left: 258, key: 'h' }, { note: 'A#3', left: 313, key: 'j' },
@@ -293,7 +332,10 @@
             piano.appendChild(el);
         });
 
-        // Web Audio API
+        // サステインペダル（音伸ばし）状態
+        let isSustainActive = false;
+
+        // Web Audio API（アコースティックピアノに近い豊かな合成音生成）
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -302,20 +344,39 @@
             const freq = noteFrequencies[note];
             if (!freq) return;
 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const now = audioCtx.currentTime;
+            const decayTime = isSustainActive ? 3.5 : 1.5; // ペダルONで音を長く伸ばす
 
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            // マスターゲイン
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0, now);
+            masterGain.gain.linearRampToValueAtTime(0.4, now + 0.02); // 素早いアタック
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, now + decayTime);
 
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+            // 倍音構造を再現（倍音を重ねて暖かみのあるアコースティック音色に）
+            const harmonics = [
+                { type: 'triangle', freqMult: 1.0, gain: 0.7 },
+                { type: 'sine',     freqMult: 1.0, gain: 0.3 },
+                { type: 'sine',     freqMult: 2.0, gain: 0.15 },
+                { type: 'sine',     freqMult: 3.0, gain: 0.05 }
+            ];
 
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            harmonics.forEach(h => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
 
-            osc.start();
-            osc.stop(audioCtx.currentTime + 1.2);
+                osc.type = h.type;
+                osc.frequency.setValueAtTime(freq * h.freqMult, now);
+                gain.gain.setValueAtTime(h.gain, now);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+
+                osc.start(now);
+                osc.stop(now + decayTime);
+            });
+
+            masterGain.connect(audioCtx.destination);
         }
 
         function triggerKey(keyElement, isGuide = false) {
@@ -337,14 +398,45 @@
             });
         });
 
+        // サステインペダルの切替
+        function togglePedal(state) {
+            isSustainActive = state !== undefined ? state : !isSustainActive;
+            const pedalBtn = document.getElementById('pedalBtn');
+            if (isSustainActive) {
+                pedalBtn.classList.add('active');
+                pedalBtn.innerText = 'ペダル: ON [Space]';
+            } else {
+                pedalBtn.classList.remove('active');
+                pedalBtn.innerText = 'ペダル: OFF [Space]';
+            }
+        }
+
+        document.getElementById('pedalBtn').addEventListener('click', () => togglePedal());
+
         // PCキーボード入力対応
         window.addEventListener('keydown', (e) => {
-            if (e.repeat) return; // 長押し連続検知の防止
+            if (e.code === 'Space') {
+                e.preventDefault();
+                togglePedal(true);
+                return;
+            }
+            if (e.repeat) return;
             const pressedKey = e.key.toLowerCase();
             const targetKey = document.querySelector(`[data-key="${pressedKey}"]`);
             if (targetKey) {
                 triggerKey(targetKey);
             }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                togglePedal(false);
+            }
+        });
+
+        // 背景切替機能
+        document.getElementById('bgSelect').addEventListener('change', (e) => {
+            document.body.className = e.target.value;
         });
 
         // デモ再生機能
