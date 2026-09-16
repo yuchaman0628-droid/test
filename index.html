@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Web Piano Game</title>
+    <title>Web Piano with Interactive Sheet</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,52 +13,104 @@
 
         body {
             margin: 0;
-            padding: 0;
-            background-color: #222;
+            padding: 20px;
+            background-color: #1a1a1a;
             color: #fff;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { margin: 10px 0; font-size: 24px; }
+
+        /* コントロールパネル */
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, button {
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        select { background: #333; color: white; border: 1px solid #555; }
+        button { background: #ff4757; color: white; font-weight: bold; }
+        button:hover { background: #ff6b81; }
+
+        /* 簡易楽譜ディスプレイ */
+        .sheet-container {
+            width: 100%;
+            max-width: 900px;
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sheet-title { font-size: 18px; color: #ffa502; margin-bottom: 10px; }
+        .notes-display {
+            display: flex;
             justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 40px;
+            align-items: center;
         }
 
-        h1 {
-            margin: 10px 0;
-            font-size: 24px;
+        .note-badge {
+            padding: 6px 12px;
+            background: #333;
+            border-radius: 4px;
+            border: 1px solid #555;
         }
 
-        p {
-            margin: 0 0 15px 0;
-            color: #ccc;
-            font-size: 14px;
+        .note-badge.current {
+            background: #2ed573;
+            color: #000;
+            border-color: #2ed573;
+            transform: scale(1.15);
         }
 
-        /* ピアノ全体の容器 */
+        /* 拡大したピアノ容器 */
+        .piano-scroll-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            overflow-x: auto;
+            background: #000;
+            padding: 15px 10px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+
         .piano-container {
             position: relative;
             display: flex;
-            background-color: #000;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-            max-width: 100%;
-            touch-action: manipulation;
+            width: max-content;
+            margin: 0 auto;
         }
 
-        /* 白鍵 */
+        /* 鍵盤サイズを拡大 (幅60px / 高さ240px) */
         .white-key {
-            width: 50px;
-            height: 200px;
+            width: 55px;
+            height: 240px;
             background: white;
             border: 1px solid #ccc;
             border-radius: 0 0 5px 5px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
             color: #333;
             font-weight: bold;
             cursor: pointer;
@@ -66,159 +118,220 @@
             z-index: 1;
         }
 
-        .white-key.active {
-            background: #e0e0e0;
+        .white-key.active, .white-key.guide {
+            background: #747d8c;
             transform: translateY(2px);
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
+        .white-key.guide { background: #2ed573 !important; color: #000; }
 
-        /* 黒鍵 */
         .black-key {
-            width: 30px;
-            height: 120px;
+            width: 34px;
+            height: 145px;
             background: #111;
             border-radius: 0 0 3px 3px;
             position: absolute;
             z-index: 2;
             cursor: pointer;
-            margin-left: -15px; /* 白鍵の境界線上に配置 */
+            margin-left: -17px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
             color: #fff;
             font-size: 11px;
         }
 
-        .black-key.active {
-            background: #444;
-            transform: translateY(2px);
-        }
-
-        /* スマホ向けレスポンシブ対応 */
-        @media (max-width: 600px) {
-            .white-key {
-                width: 40px;
-                height: 160px;
-                font-size: 12px;
-            }
-            .black-key {
-                width: 24px;
-                height: 95px;
-                margin-left: -12px;
-                font-size: 9px;
-            }
-        }
+        .black-key.active, .black-key.guide { background: #57606f; }
+        .black-key.guide { background: #2ed573 !important; color: #000; }
     </style>
 </head>
 <body>
 
-    <h1>🎵 ミニピアノ 🎵</h1>
-    <p>画面をタップ／クリックするか、対応するPCキーボードを押してください</p>
+    <h1>🎹 インタラクティブ・ピアノ 🎹</h1>
 
-    <div class="piano-container">
-        <!-- 白鍵 -->
-        <div class="white-key" data-note="C4" data-key="a">A<br>(ド)</div>
-        <div class="white-key" data-note="D4" data-key="s">S<br>(レ)</div>
-        <div class="white-key" data-note="E4" data-key="d">D<br>(ミ)</div>
-        <div class="white-key" data-note="F4" data-key="f">F<br>(ファ)</div>
-        <div class="white-key" data-note="G4" data-key="g">G<br>(ソ)</div>
-        <div class="white-key" data-note="A4" data-key="h">H<br>(ラ)</div>
-        <div class="white-key" data-note="B4" data-key="j">J<br>(シ)</div>
-        <div class="white-key" data-note="C5" data-key="k">K<br>(ド)</div>
+    <div class="controls">
+        <select id="songSelect">
+            <option value="twinkle">きらきら星</option>
+            <option value="tulip">チューリップ</option>
+            <option value="joy">歓喜の歌（ベートーヴェン）</option>
+        </select>
+        <button id="playDemoBtn">お手本演奏を聴く</button>
+    </div>
 
-        <!-- 黒鍵（位置は left プロパティで白鍵の間に調整） -->
-        <div class="black-key" style="left: 50px;" data-note="C#4" data-key="w">W</div>
-        <div class="black-key" style="left: 100px;" data-note="D#4" data-key="e">E</div>
-        <div class="black-key" style="left: 200px;" data-note="F#4" data-key="t">T</div>
-        <div class="black-key" style="left: 250px;" data-note="G#4" data-key="y">Y</div>
-        <div class="black-key" style="left: 300px;" data-note="A#4" data-key="u">U</div>
+    <!-- 簡易楽譜表示エリア -->
+    <div class="sheet-container">
+        <div class="sheet-title" id="songTitle">演奏ガイド</div>
+        <div class="notes-display" id="notesDisplay">
+            曲を選んで「お手本演奏」を押すか、自力で弾いてみましょう！
+        </div>
+    </div>
+
+    <!-- 拡大・拡張版鍵盤 (2オクターブ超) -->
+    <div class="piano-scroll-wrapper">
+        <div class="piano-container" id="piano">
+            <!-- 白鍵 -->
+            <div class="white-key" data-note="C3">C3<br>(ド)</div>
+            <div class="white-key" data-note="D3">D3<br>(レ)</div>
+            <div class="white-key" data-note="E3">E3<br>(ミ)</div>
+            <div class="white-key" data-note="F3">F3<br>(ファ)</div>
+            <div class="white-key" data-note="G3">G3<br>(ソ)</div>
+            <div class="white-key" data-note="A3">A3<br>(ラ)</div>
+            <div class="white-key" data-note="B3">B3<br>(シ)</div>
+
+            <div class="white-key" data-note="C4">C4<br>(ド)</div>
+            <div class="white-key" data-note="D4">D4<br>(レ)</div>
+            <div class="white-key" data-note="E4">E4<br>(ミ)</div>
+            <div class="white-key" data-note="F4">F4<br>(ファ)</div>
+            <div class="white-key" data-note="G4">G4<br>(ソ)</div>
+            <div class="white-key" data-note="A4">A4<br>(ラ)</div>
+            <div class="white-key" data-note="B4">B4<br>(シ)</div>
+
+            <div class="white-key" data-note="C5">C5<br>(ド)</div>
+            <div class="white-key" data-note="D5">D5<br>(レ)</div>
+            <div class="white-key" data-note="E5">E5<br>(ミ)</div>
+
+            <!-- 黒鍵（自動配置） -->
+        </div>
     </div>
 
     <script>
-        // 音階ごとの周波数（Hz）定義
+        // 音源周波数マッピング (C3〜E5)
         const noteFrequencies = {
-            'C4': 261.63,  // ド
-            'C#4': 277.18, // ド#
-            'D4': 293.66,  // レ
-            'D#4': 311.13, // レ#
-            'E4': 329.63,  // ミ
-            'F4': 349.23,  // ファ
-            'F#4': 369.99, // ファ#
-            'G4': 392.00,  // ソ
-            'G#4': 415.30, // ソ#
-            'A4': 440.00,  // ラ
-            'A#4': 466.16, // ラ#
-            'B4': 493.88,  // シ
-            'C5': 523.25   // ド(高)
+            'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25
         };
 
-        // Web Audio API の初期化
+        // 楽曲データ（楽譜とリズム情報）
+        const songs = {
+            twinkle: {
+                title: "きらきら星",
+                notes: [
+                    { note: 'C4', duration: 400 }, { note: 'C4', duration: 400 },
+                    { note: 'G4', duration: 400 }, { note: 'G4', duration: 400 },
+                    { note: 'A4', duration: 400 }, { note: 'A4', duration: 400 },
+                    { note: 'G4', duration: 800 },
+                    { note: 'F4', duration: 400 }, { note: 'F4', duration: 400 },
+                    { note: 'E4', duration: 400 }, { note: 'E4', duration: 400 },
+                    { note: 'D4', duration: 400 }, { note: 'D4', duration: 400 },
+                    { note: 'C4', duration: 800 }
+                ]
+            },
+            tulip: {
+                title: "チューリップ",
+                notes: [
+                    { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 800 },
+                    { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 800 },
+                    { note: 'G4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'C4', duration: 400 },
+                    { note: 'D4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 800 }
+                ]
+            },
+            joy: {
+                title: "歓喜の歌",
+                notes: [
+                    { note: 'E4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'F4', duration: 400 }, { note: 'G4', duration: 400 },
+                    { note: 'G4', duration: 400 }, { note: 'F4', duration: 400 }, { note: 'E4', duration: 400 }, { note: 'D4', duration: 400 },
+                    { note: 'C4', duration: 400 }, { note: 'C4', duration: 400 }, { note: 'D4', duration: 400 }, { note: 'E4', duration: 400 },
+                    { note: 'E4', duration: 600 }, { note: 'D4', duration: 200 }, { note: 'D4', duration: 800 }
+                ]
+            }
+        };
+
+        // 黒鍵の自動配置処理
+        const blackKeyPositions = [
+            { note: 'C#3', left: 38 }, { note: 'D#3', left: 93 },
+            { note: 'F#3', left: 203 }, { note: 'G#3', left: 258 }, { note: 'A#3', left: 313 },
+            { note: 'C#4', left: 423 }, { note: 'D#4', left: 478 },
+            { note: 'F#4', left: 588 }, { note: 'G#4', left: 643 }, { note: 'A#4', left: 698 },
+            { note: 'C#5', left: 808 }, { note: 'D#5', left: 863 }
+        ];
+
+        const piano = document.getElementById('piano');
+        blackKeyPositions.forEach(bk => {
+            const el = document.createElement('div');
+            el.className = 'black-key';
+            el.style.left = `${bk.left}px`;
+            el.setAttribute('data-note', bk.note);
+            el.innerText = bk.note.replace('4','').replace('3','').replace('5','');
+            piano.appendChild(el);
+        });
+
+        // サウンド再生エンジン
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
-        // 音を鳴らす関数
-        function playNote(note) {
-            if (!audioCtx) {
-                audioCtx = new AudioContext();
-            }
-
+        function playNoteSound(note) {
+            if (!audioCtx) audioCtx = new AudioContext();
             const freq = noteFrequencies[note];
             if (!freq) return;
 
-            // オシレーター（発振器）と ゲイン（音量調節）の作成
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
 
-            osc.type = 'triangle'; // ピアノに近い柔らかい波形（'sine', 'square', 'sawtooth', 'triangle'）
+            osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-            // 音の余韻（エンベロープ）を設定
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2); // 1.2秒かけて減衰
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
 
-            // 接続と再生
             osc.connect(gain);
             gain.connect(audioCtx.destination);
 
             osc.start();
-            osc.stop(audioCtx.currentTime + 1.2);
+            osc.stop(audioCtx.currentTime + 1.0);
         }
 
-        // キー操作・タップのイベント登録
-        const keys = document.querySelectorAll('.white-key, .black-key');
-
-        function triggerKey(keyElement) {
+        // キーを押す・視覚効果処理
+        function triggerKey(keyElement, isGuide = false) {
             if (!keyElement) return;
             const note = keyElement.getAttribute('data-note');
-            playNote(note);
+            playNoteSound(note);
 
-            // 押した時の見た目効果
-            keyElement.classList.add('active');
-            setTimeout(() => keyElement.classList.remove('active'), 150);
+            const activeClass = isGuide ? 'guide' : 'active';
+            keyElement.classList.add(activeClass);
+            setTimeout(() => keyElement.classList.remove(activeClass), 200);
         }
 
-        // タッチ / クリック イベント
-        keys.forEach(key => {
+        // クリック／タップイベント登録
+        document.querySelectorAll('.white-key, .black-key').forEach(key => {
+            key.addEventListener('mousedown', () => triggerKey(key));
             key.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // スクロール防止
-                triggerKey(key);
-            });
-
-            key.addEventListener('mousedown', () => {
+                e.preventDefault();
                 triggerKey(key);
             });
         });
 
-        // PCのキーボード入力対応
-        window.addEventListener('keydown', (e) => {
-            if (e.repeat) return; // 長押しでの連打防止
-            const pressedKey = e.key.toLowerCase();
-            const targetKey = document.querySelector(`[data-key="${pressedKey}"]`);
-            if (targetKey) {
-                triggerKey(targetKey);
+        // 自動演奏とガイド楽譜機能
+        let isPlaying = false;
+        async function playDemo() {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            const songKey = document.getElementById('songSelect').value;
+            const song = songs[songKey];
+            document.getElementById('songTitle').innerText = `演奏中: ${song.title}`;
+
+            const display = document.getElementById('notesDisplay');
+            display.innerHTML = song.notes.map((n, i) => `<span class="note-badge" id="badge-${i}">${n.note}</span>`).join('');
+
+            for (let i = 0; i < song.notes.length; i++) {
+                const item = song.notes[i];
+                const badge = document.getElementById(`badge-${i}`);
+                
+                // ガイド強調
+                if (badge) badge.classList.add('current');
+                const keyEl = document.querySelector(`[data-note="${item.note}"]`);
+                triggerKey(keyEl, true);
+
+                await new Promise(r => setTimeout(r, item.duration));
+                if (badge) badge.classList.remove('current');
             }
-        });
+
+            document.getElementById('songTitle').innerText = '演奏完了！自分で弾いてみよう';
+            isPlaying = false;
+        }
+
+        document.getElementById('playDemoBtn').addEventListener('click', playDemo);
     </script>
 </body>
 </html>
