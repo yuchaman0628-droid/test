@@ -5,7 +5,884 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Web Keyboard Piano</title>
     <style>
-        * {
+        <!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S. AI OS (Powered by Gemini API)</title>
+  <!-- Marked.js (Markdown Rendering) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #050b14;
+      --bg-secondary: #0a1628;
+      --panel-bg: rgba(10, 25, 47, 0.75);
+      --accent-blue: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
+      --accent-red: #ff2a6d;
+      --text-main: #e0f7fc;
+      --text-muted: #5c889c;
+      --border-color: rgba(0, 240, 255, 0.25);
+      --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+
+    [data-theme="stealth"] {
+      --bg-primary: #0a0a0c;
+      --bg-secondary: #121216;
+      --panel-bg: rgba(18, 18, 22, 0.85);
+      --accent-blue: #7000ff;
+      --accent-glow: rgba(112, 0, 255, 0.4);
+      --text-main: #ece6ff;
+      --text-muted: #675b8a;
+      --border-color: rgba(112, 0, 255, 0.25);
+    }
+
+    [data-theme="crimson"] {
+      --bg-primary: #120307;
+      --bg-secondary: #1f070e;
+      --panel-bg: rgba(31, 7, 14, 0.85);
+      --accent-blue: #ff0055;
+      --accent-glow: rgba(255, 0, 85, 0.4);
+      --text-main: #ffe6ed;
+      --text-muted: #8c5364;
+      --border-color: rgba(255, 0, 85, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 80%),
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 30px 30px, 30px 30px;
+    }
+
+    /* Header & HUD Bar */
+    header {
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 0 15px var(--accent-glow);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--accent-blue);
+      text-shadow: 0 0 8px var(--accent-blue);
+    }
+
+    .brand i {
+      font-size: 1.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    .hud-metrics {
+      display: flex;
+      gap: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hud-metric-item span {
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Main Container */
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* Sidebar Panels */
+    .sidebar {
+      width: 320px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-section {
+      padding: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Arc Reactor Visualizer */
+    .arc-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    .arc-reactor {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-blue);
+      box-shadow: 0 0 20px var(--accent-blue), inset 0 0 20px var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      animation: rotate 10s linear infinite;
+    }
+
+    .arc-inner {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px dashed var(--accent-blue);
+      animation: rotate-reverse 6s linear infinite;
+    }
+
+    .arc-core {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 15px var(--accent-blue);
+      position: absolute;
+    }
+
+    /* Controls & Presets */
+    .btn {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: var(--accent-blue);
+      color: var(--bg-primary);
+      box-shadow: 0 0 10px var(--accent-blue);
+    }
+
+    .btn-danger {
+      background: rgba(255, 42, 109, 0.1);
+      border-color: rgba(255, 42, 109, 0.4);
+      color: var(--accent-red);
+    }
+
+    .btn-danger:hover {
+      background: var(--accent-red);
+      color: #fff;
+      box-shadow: 0 0 10px var(--accent-red);
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      font-size: 0.75rem;
+      padding: 6px;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Task Panel */
+    .task-list {
+      list-style: none;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+    }
+
+    .task-item.completed {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    /* Chat View Area */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(5, 11, 20, 0.5);
+      position: relative;
+    }
+
+    .messages-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 8px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      position: relative;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--border-color);
+      border-top-right-radius: 0;
+    }
+
+    .message.jarvis {
+      align-self: flex-start;
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-top-left-radius: 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .message-header {
+      font-size: 0.75rem;
+      color: var(--accent-blue);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .message-content {
+      overflow-x: auto;
+    }
+
+    .message-content pre {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      margin: 8px 0;
+    }
+
+    /* Input Bar */
+    .input-container {
+      padding: 15px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-box {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 12px 16px;
+      border-radius: 6px;
+      outline: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .input-box:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .mic-btn.active {
+      background: var(--accent-red);
+      color: #fff;
+      animation: pulse 1s infinite;
+    }
+
+    /* Modal Component */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 25px;
+      border-radius: 8px;
+      width: 450px;
+      box-shadow: 0 0 25px var(--accent-glow);
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      color: var(--accent-blue);
+      margin-bottom: 15px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    /* Animations */
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes rotate-reverse {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.98); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-theme="jarvis">
+
+  <!-- Header / HUD Bar -->
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-atom"></i>
+      <span>J.A.R.V.I.S. AI System</span>
+    </div>
+    <div class="hud-metrics">
+      <div class="hud-metric-item">CORE: <span id="cpu-status">ONLINE</span></div>
+      <div class="hud-metric-item">API: <span id="api-status">DISCONNECTED</span></div>
+      <div class="hud-metric-item">TOKENS: <span id="token-counter">0</span></div>
+    </div>
+    <div class="header-controls">
+      <button class="btn" id="config-btn"><i class="fa-solid fa-gear"></i> 設定</button>
+      <select class="btn" id="theme-select">
+        <option value="jarvis">JARVIS Blue</option>
+        <option value="stealth">Stealth Purple</option>
+        <option value="crimson">Crimson Red</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="main-container">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      
+      <!-- Core Reactor Visualizer -->
+      <div class="arc-container">
+        <div class="arc-reactor">
+          <div class="arc-inner"></div>
+          <div class="arc-core"></div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--accent-blue); letter-spacing: 2px;">
+          SYSTEM READY
+        </div>
+      </div>
+
+      <!-- Quick AI Tool Presets -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>AI ツールプリセット</span>
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="preset-grid">
+          <button class="btn preset-btn" onclick="applyPreset('summary')"><i class="fa-solid fa-file-contract"></i> 要約</button>
+          <button class="btn preset-btn" onclick="applyPreset('translate')"><i class="fa-solid fa-language"></i> 英語翻訳</button>
+          <button class="btn preset-btn" onclick="applyPreset('code')"><i class="fa-solid fa-code"></i> コード最適化</button>
+          <button class="btn preset-btn" onclick="applyPreset('brainstorm')"><i class="fa-solid fa-lightbulb"></i> アイデア出し</button>
+          <button class="btn preset-btn" onclick="applyPreset('task')"><i class="fa-solid fa-list-check"></i> Task分解</button>
+          <button class="btn preset-btn" onclick="applyPreset('proofread')"><i class="fa-solid fa-pen-nib"></i> 文章校正</button>
+        </div>
+      </div>
+
+      <!-- Jarvis Task Manager Panel -->
+      <div class="sidebar-section" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="sidebar-title">
+          <span>JARVIS Task Log</span>
+          <i class="fa-solid fa-check-double"></i>
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+          <input type="text" id="new-task-input" class="input-box" style="padding: 6px; font-size: 0.8rem;" placeholder="新しいタスク...">
+          <button class="btn" onclick="addTask()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <ul class="task-list" id="task-list"></ul>
+      </div>
+
+      <!-- System Utilities -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">システムユーティリティ</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button class="btn" onclick="exportChatHistory()"><i class="fa-solid fa-download"></i> ログを書き出す (JSON)</button>
+          <button class="btn btn-danger" onclick="clearChat()"><i class="fa-solid fa-trash"></i> メモリクリア</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Chat Workspace -->
+    <div class="chat-container">
+      <div class="messages-area" id="chat-messages">
+        <!-- Initial Welcome Message -->
+        <div class="message jarvis">
+          <div class="message-header">
+            <span>J.A.R.V.I.S. SYSTEM</span>
+            <span>NOW</span>
+          </div>
+          <div class="message-content">
+            おかえりなさいませ、サー。J.A.R.V.I.S. システムがオンラインです。<br>
+            設定ボタン（<i class="fa-solid fa-gear"></i>）よりGemini APIキーを入力して各種コマンドを実行してください。
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Interface -->
+      <div class="input-container">
+        <button class="btn mic-btn" id="mic-btn" title="音声入力 (Speech Recognition)">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <button class="btn" id="tts-toggle-btn" title="音声読み上げオン/オフ">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <input type="text" id="user-input" class="input-box" placeholder="Jarvisへ指示を入力、または音声で話しかけてください..." onkeydown="handleKeyDown(event)">
+        <button class="btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i> 送信</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="config-modal">
+    <div class="modal-content">
+      <div class="modal-title"><i class="fa-solid fa-sliders"></i> JARVIS システム設定</div>
+      <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Gemini API Key</label>
+      <input type="password" id="api-key-input" class="modal-input" placeholder="AIzaSy...">
+      
+      <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">API Model Select</label>
+      <select id="model-select" class="modal-input">
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash (高速・最新推奨)</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro (高度推論)</option>
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash (標準)</option>
+      </select>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn" onclick="closeConfigModal()">キャンセル</button>
+        <button class="btn" onclick="saveConfig()">保存＆適用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Effects (Web Audio API Sound Synth) -->
+  <script>
+    // System Audio Effects Synth
+    const SoundEffects = {
+      ctx: null,
+      init() {
+        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      },
+      playBeep(freq = 800, duration = 0.08, type = 'sine') {
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      },
+      send() { this.playBeep(1200, 0.05); },
+      receive() { this.playBeep(600, 0.12); },
+      error() { this.playBeep(200, 0.2, 'sawtooth'); }
+    };
+
+    // State Management
+    let apiKey = localStorage.getItem('jarvis_gemini_api_key') || '';
+    let selectedModel = localStorage.getItem('jarvis_model') || 'gemini-2.0-flash';
+    let chatHistory = JSON.parse(localStorage.getItem('jarvis_chat_history') || '[]');
+    let tasks = JSON.parse(localStorage.getItem('jarvis_tasks') || '[]');
+    let ttsEnabled = true;
+    let totalTokensEstimate = 0;
+
+    // Speech Recognition Setup
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('mic-btn').classList.add('active');
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        document.getElementById('mic-btn').classList.remove('active');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('user-input').value = transcript;
+        sendMessage();
+      };
+    }
+
+    // Speech Synthesis (TTS)
+    function speakText(text) {
+      if (!ttsEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel(); // Stop ongoing
+      const cleanText = text.replace(/```[\s\S]*?```/g, 'コードブロック参照').replace(/[#*`_]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 1.05;
+      utterance.pitch = 0.95;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      if (apiKey) {
+        document.getElementById('api-status').textContent = 'ONLINE';
+        document.getElementById('api-status').style.color = 'var(--accent-blue)';
+      }
+      document.getElementById('api-key-input').value = apiKey;
+      document.getElementById('model-select').value = selectedModel;
+      
+      renderChatHistory();
+      renderTasks();
+
+      // UI Listeners
+      document.getElementById('config-btn').addEventListener('click', () => {
+        document.getElementById('config-modal').classList.add('open');
+      });
+
+      document.getElementById('theme-select').addEventListener('change', (e) => {
+        document.body.setAttribute('data-theme', e.target.value);
+      });
+
+      document.getElementById('mic-btn').addEventListener('click', () => {
+        if (!recognition) {
+          alert('お使いのブラウザは音声認識に対応していません。');
+          return;
+        }
+        if (isListening) recognition.stop();
+        else recognition.start();
+      });
+
+      document.getElementById('tts-toggle-btn').addEventListener('click', function() {
+        ttsEnabled = !ttsEnabled;
+        this.style.color = ttsEnabled ? 'var(--accent-blue)' : 'var(--text-muted)';
+        SoundEffects.playBeep(ttsEnabled ? 900 : 400);
+      });
+    });
+
+    function closeConfigModal() {
+      document.getElementById('config-modal').classList.remove('open');
+    }
+
+    function saveConfig() {
+      apiKey = document.getElementById('api-key-input').value.trim();
+      selectedModel = document.getElementById('model-select').value;
+      localStorage.setItem('jarvis_gemini_api_key', apiKey);
+      localStorage.setItem('jarvis_model', selectedModel);
+
+      if (apiKey) {
+        document.getElementById('api-status').textContent = 'ONLINE';
+        document.getElementById('api-status').style.color = 'var(--accent-blue)';
+      } else {
+        document.getElementById('api-status').textContent = 'DISCONNECTED';
+        document.getElementById('api-status').style.color = 'var(--accent-red)';
+      }
+      closeConfigModal();
+      SoundEffects.playBeep(1000);
+    }
+
+    // Presets Implementation
+    const PRESETS = {
+      summary: "以下のテキストの重要な要点を弾丸リストで簡潔に要約してください：\n\n",
+      translate: "以下の文を自然で正確な英語に翻訳してください：\n\n",
+      code: "以下のコードのバグを特定し、最適なパフォーマンスにリファクタリングしてください：\n\n",
+      brainstorm: "以下のテーマについて、革新的かつ実現可能なアイデアを5つ提案してください：\n\n",
+      task: "以下のプロジェクト目標を達成するための具体ステップを箇条書きでブレイクダウンしてください：\n\n",
+      proofread: "以下の文章の誤字脱字を修正し、よりプロフェッショナルな文体に校正してください：\n\n"
+    };
+
+    function applyPreset(type) {
+      const input = document.getElementById('user-input');
+      input.value = PRESETS[type];
+      input.focus();
+      SoundEffects.playBeep(700);
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    // Core Chat Handling
+    async function sendMessage() {
+      const inputEl = document.getElementById('user-input');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      if (!apiKey) {
+        alert('Gemini APIキーを設定（右上の設定ボタン）してください。');
+        document.getElementById('config-modal').classList.add('open');
+        return;
+      }
+
+      SoundEffects.send();
+      appendMessage('user', text);
+      inputEl.value = '';
+
+      // Prepare Messages for History
+      chatHistory.push({ role: 'user', parts: [{ text: text }] });
+      saveChatHistory();
+
+      const loadingMsgId = appendMessage('jarvis', '思考中... [JARVIS Core Processing]');
+
+      try {
+        // Calling Gemini API Endpoint
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: chatHistory,
+            systemInstruction: {
+              parts: [{ text: "あなたは高度なAIアシスタント『J.A.R.V.I.S.』です。丁寧かつ理知的で、SF風でありつつ非常に役立つ応答を提供してください。ユーザーを『サー』または『ボス』と呼びます。" }]
+            }
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error.message || 'API Error');
+
+        const reply = data.candidates[0].content.parts[0].text;
+        
+        // Remove loading and show real reply
+        removeMessage(loadingMsgId);
+        appendMessage('jarvis', reply);
+        
+        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+        saveChatHistory();
+
+        // Update token estimate
+        totalTokensEstimate += Math.round((text.length + reply.length) / 3);
+        document.getElementById('token-counter').textContent = totalTokensEstimate;
+
+        SoundEffects.receive();
+        speakText(reply);
+
+      } catch (err) {
+        removeMessage(loadingMsgId);
+        appendMessage('jarvis', `エラーが発生しました: ${err.message}`);
+        SoundEffects.error();
+      }
+    }
+
+    function appendMessage(sender, text) {
+      const msgArea = document.getElementById('chat-messages');
+      const msgId = 'msg-' + Date.now();
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.id = msgId;
+
+      const renderedText = sender === 'jarvis' ? marked.parse(text) : escapeHtml(text);
+
+      msgDiv.innerHTML = `
+        <div class="message-header">
+          <span>${sender === 'user' ? 'USER Command' : 'J.A.R.V.I.S.'}</span>
+          <span>${timeStr}</span>
+        </div>
+        <div class="message-content">${renderedText}</div>
+      `;
+
+      msgArea.appendChild(msgDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+      return msgId;
+    }
+
+    function removeMessage(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function saveChatHistory() {
+      // Limit local storage size
+      if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+      localStorage.setItem('jarvis_chat_history', JSON.stringify(chatHistory));
+    }
+
+    function renderChatHistory() {
+      chatHistory.forEach(item => {
+        const role = item.role === 'user' ? 'user' : 'jarvis';
+        appendMessage(role, item.parts[0].text);
+      });
+    }
+
+    function clearChat() {
+      if (confirm('Jarvisのメモリログをリセットしますか？')) {
+        chatHistory = [];
+        localStorage.removeItem('jarvis_chat_history');
+        document.getElementById('chat-messages').innerHTML = '';
+        appendMessage('jarvis', 'メモリをリセットしました。新たな指示をどうぞ、サー。');
+        SoundEffects.playBeep(300);
+      }
+    }
+
+    function exportChatHistory() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chatHistory, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `jarvis_log_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Task Management System
+    function addTask() {
+      const input = document.getElementById('new-task-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      tasks.push({ id: Date.now(), title: val, done: false });
+      input.value = '';
+      saveAndRenderTasks();
+      SoundEffects.playBeep(900);
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      saveAndRenderTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveAndRenderTasks();
+    }
+
+    function saveAndRenderTasks() {
+      localStorage.setItem('jarvis_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      list.innerHTML = '';
+      tasks.forEach(t => {
+        const li = document.createElement('li');
+        li.className = `task-item ${t.done ? 'completed' : ''}`;
+        li.innerHTML = `
+          <span onclick="toggleTask(${t.id})" style="cursor:pointer;">
+            <i class="fa-${t.done ? 'solid' : 'regular'} fa-square-check"></i> ${escapeHtml(t.title)}
+          </span>
+          <i class="fa-solid fa-xmark" style="cursor:pointer; color: var(--accent-red);" onclick="deleteTask(${t.id})"></i>
+        `;
+        list.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>* {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
